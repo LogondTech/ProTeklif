@@ -1,0 +1,707 @@
+import { useEffect, useState } from "react";
+import PageHeader from "../components/PageHeader.jsx";
+import { api } from "../services/api.js";
+import { languages, useI18n } from "../i18n.jsx";
+
+const empty = {
+  name: "",
+  logoDataUrl: "",
+  address: "",
+  phone: "",
+  email: "",
+  taxOffice: "",
+  taxNumber: "",
+};
+
+const nativeLanguageNames = {
+  tr: "Türkçe",
+  en: "English",
+  zh: "中文",
+  hi: "हिन्दी",
+  es: "Español",
+  ar: "العربية",
+  pt: "Português",
+  fr: "Français",
+  de: "Deutsch",
+  ru: "Русский",
+  ja: "日本語",
+};
+
+const copies = {
+  tr: {
+    title: "Ayarlar",
+    description: "PDF belgelerinde kullanılacak firma kimliğini ve yerel verilerinizi yönetin.",
+    languageTitle: "Uygulama Dili",
+    languageHelp: "Arayüz dilini değiştirin. Seçiminiz anında tüm uygulamaya uygulanır.",
+    companyInfo: "Firma Bilgileri",
+    loadingCompany: "Firma bilgileri yükleniyor…",
+    noLogo: "Logo yok",
+    logoAlt: "Firma logosu",
+    selectLogo: "Logo Seç",
+    removeLogo: "Kaldır",
+    logoHint: "PNG, JPG veya WebP · en fazla 2 MB",
+    companyName: "Firma adı",
+    companyNamePlaceholder: "Örn. ProTeklif Ltd. Şti.",
+    phone: "Telefon",
+    phonePlaceholder: "+90 555 000 00 00",
+    email: "E-posta",
+    emailPlaceholder: "ornek@firma.com",
+    taxOffice: "Vergi dairesi",
+    taxOfficePlaceholder: "Vergi dairesi",
+    taxNumber: "Vergi numarası",
+    taxNumberPlaceholder: "Vergi numarası",
+    address: "Adres",
+    addressPlaceholder: "Firmanın açık adresi",
+    saving: "Kaydediliyor…",
+    saveCompany: "Firma Bilgilerini Kaydet",
+    saved: "Firma bilgileri kaydedildi. Yeni PDF çıktılarında kullanılacak.",
+    loadError: "Firma bilgileri yüklenemedi.",
+    logoError: "Logo seçilemedi.",
+    saveError: "Firma bilgileri kaydedilemedi.",
+    backupTitle: "Veritabanı Yedeği",
+    backupDescription: "Müşteri, teklif ve firma bilgilerini tek bir SQLite dosyasına kopyalar.",
+    createBackup: "Yedek Oluştur",
+    backingUp: "Yedekleniyor…",
+    backupCanceled: "Yedekleme iptal edildi.",
+    backupSaved: "Yedek kaydedildi:",
+    backupError: "Yedek oluşturulamadı.",
+  },
+  en: {
+    title: "Settings",
+    description: "Manage the company identity used in PDF documents and your local data.",
+    languageTitle: "Application Language",
+    languageHelp: "Change the interface language. Your choice is applied to the entire app immediately.",
+    companyInfo: "Company Information",
+    loadingCompany: "Loading company information…",
+    noLogo: "No logo",
+    logoAlt: "Company logo",
+    selectLogo: "Choose Logo",
+    removeLogo: "Remove",
+    logoHint: "PNG, JPG or WebP · maximum 2 MB",
+    companyName: "Company name",
+    companyNamePlaceholder: "e.g. ProTeklif Ltd.",
+    phone: "Phone",
+    phonePlaceholder: "+1 555 000 0000",
+    email: "Email",
+    emailPlaceholder: "hello@company.com",
+    taxOffice: "Tax office",
+    taxOfficePlaceholder: "Tax office",
+    taxNumber: "Tax number",
+    taxNumberPlaceholder: "Tax number",
+    address: "Address",
+    addressPlaceholder: "Full company address",
+    saving: "Saving…",
+    saveCompany: "Save Company Information",
+    saved: "Company information was saved and will be used in new PDF documents.",
+    loadError: "Company information could not be loaded.",
+    logoError: "The logo could not be selected.",
+    saveError: "Company information could not be saved.",
+    backupTitle: "Database Backup",
+    backupDescription: "Copies customer, quote and company information into a single SQLite file.",
+    createBackup: "Create Backup",
+    backingUp: "Creating backup…",
+    backupCanceled: "Backup was canceled.",
+    backupSaved: "Backup saved:",
+    backupError: "The backup could not be created.",
+  },
+  zh: {
+    title: "设置",
+    description: "管理 PDF 文档中使用的公司信息和本地数据。",
+    languageTitle: "应用语言",
+    languageHelp: "更改界面语言。您的选择会立即应用到整个应用。",
+    companyInfo: "公司信息",
+    loadingCompany: "正在加载公司信息…",
+    noLogo: "暂无徽标",
+    logoAlt: "公司徽标",
+    selectLogo: "选择徽标",
+    removeLogo: "移除",
+    logoHint: "PNG、JPG 或 WebP · 最大 2 MB",
+    companyName: "公司名称",
+    companyNamePlaceholder: "例如：ProTeklif 有限公司",
+    phone: "电话",
+    phonePlaceholder: "+86 138 0000 0000",
+    email: "电子邮箱",
+    emailPlaceholder: "hello@company.com",
+    taxOffice: "税务机关",
+    taxOfficePlaceholder: "税务机关",
+    taxNumber: "税号",
+    taxNumberPlaceholder: "税号",
+    address: "地址",
+    addressPlaceholder: "公司完整地址",
+    saving: "正在保存…",
+    saveCompany: "保存公司信息",
+    saved: "公司信息已保存，并将用于新的 PDF 文档。",
+    loadError: "无法加载公司信息。",
+    logoError: "无法选择徽标。",
+    saveError: "无法保存公司信息。",
+    backupTitle: "数据库备份",
+    backupDescription: "将客户、报价和公司信息复制到一个 SQLite 文件中。",
+    createBackup: "创建备份",
+    backingUp: "正在备份…",
+    backupCanceled: "备份已取消。",
+    backupSaved: "备份已保存：",
+    backupError: "无法创建备份。",
+  },
+  hi: {
+    title: "सेटिंग्स",
+    description: "PDF दस्तावेज़ों में उपयोग होने वाली कंपनी पहचान और अपने स्थानीय डेटा को प्रबंधित करें।",
+    languageTitle: "ऐप की भाषा",
+    languageHelp: "इंटरफ़ेस की भाषा बदलें। आपका चयन तुरंत पूरे ऐप पर लागू होगा।",
+    companyInfo: "कंपनी की जानकारी",
+    loadingCompany: "कंपनी की जानकारी लोड हो रही है…",
+    noLogo: "कोई लोगो नहीं",
+    logoAlt: "कंपनी का लोगो",
+    selectLogo: "लोगो चुनें",
+    removeLogo: "हटाएँ",
+    logoHint: "PNG, JPG या WebP · अधिकतम 2 MB",
+    companyName: "कंपनी का नाम",
+    companyNamePlaceholder: "जैसे ProTeklif Ltd.",
+    phone: "फ़ोन",
+    phonePlaceholder: "+91 98765 43210",
+    email: "ईमेल",
+    emailPlaceholder: "hello@company.com",
+    taxOffice: "कर कार्यालय",
+    taxOfficePlaceholder: "कर कार्यालय",
+    taxNumber: "कर संख्या",
+    taxNumberPlaceholder: "कर संख्या",
+    address: "पता",
+    addressPlaceholder: "कंपनी का पूरा पता",
+    saving: "सहेजा जा रहा है…",
+    saveCompany: "कंपनी की जानकारी सहेजें",
+    saved: "कंपनी की जानकारी सहेजी गई और नए PDF दस्तावेज़ों में उपयोग होगी।",
+    loadError: "कंपनी की जानकारी लोड नहीं की जा सकी।",
+    logoError: "लोगो नहीं चुना जा सका।",
+    saveError: "कंपनी की जानकारी सहेजी नहीं जा सकी।",
+    backupTitle: "डेटाबेस बैकअप",
+    backupDescription: "ग्राहक, कोटेशन और कंपनी की जानकारी को एक SQLite फ़ाइल में कॉपी करता है।",
+    createBackup: "बैकअप बनाएँ",
+    backingUp: "बैकअप बन रहा है…",
+    backupCanceled: "बैकअप रद्द कर दिया गया।",
+    backupSaved: "बैकअप सहेजा गया:",
+    backupError: "बैकअप नहीं बनाया जा सका।",
+  },
+  es: {
+    title: "Ajustes",
+    description: "Gestiona la identidad de la empresa utilizada en los PDF y tus datos locales.",
+    languageTitle: "Idioma de la aplicación",
+    languageHelp: "Cambia el idioma de la interfaz. La selección se aplica inmediatamente a toda la aplicación.",
+    companyInfo: "Información de la empresa",
+    loadingCompany: "Cargando información de la empresa…",
+    noLogo: "Sin logotipo",
+    logoAlt: "Logotipo de la empresa",
+    selectLogo: "Elegir logotipo",
+    removeLogo: "Quitar",
+    logoHint: "PNG, JPG o WebP · máximo 2 MB",
+    companyName: "Nombre de la empresa",
+    companyNamePlaceholder: "p. ej., ProTeklif S.L.",
+    phone: "Teléfono",
+    phonePlaceholder: "+34 600 000 000",
+    email: "Correo electrónico",
+    emailPlaceholder: "hola@empresa.com",
+    taxOffice: "Oficina tributaria",
+    taxOfficePlaceholder: "Oficina tributaria",
+    taxNumber: "Número fiscal",
+    taxNumberPlaceholder: "Número fiscal",
+    address: "Dirección",
+    addressPlaceholder: "Dirección completa de la empresa",
+    saving: "Guardando…",
+    saveCompany: "Guardar información de la empresa",
+    saved: "La información de la empresa se guardó y se usará en los nuevos PDF.",
+    loadError: "No se pudo cargar la información de la empresa.",
+    logoError: "No se pudo seleccionar el logotipo.",
+    saveError: "No se pudo guardar la información de la empresa.",
+    backupTitle: "Copia de seguridad de la base de datos",
+    backupDescription: "Copia la información de clientes, presupuestos y empresa en un único archivo SQLite.",
+    createBackup: "Crear copia de seguridad",
+    backingUp: "Creando copia…",
+    backupCanceled: "La copia de seguridad se canceló.",
+    backupSaved: "Copia guardada:",
+    backupError: "No se pudo crear la copia de seguridad.",
+  },
+  ar: {
+    title: "الإعدادات",
+    description: "أدر هوية الشركة المستخدمة في مستندات PDF وبياناتك المحلية.",
+    languageTitle: "لغة التطبيق",
+    languageHelp: "غيّر لغة الواجهة. يتم تطبيق اختيارك فورًا على التطبيق بالكامل.",
+    companyInfo: "معلومات الشركة",
+    loadingCompany: "جارٍ تحميل معلومات الشركة…",
+    noLogo: "لا يوجد شعار",
+    logoAlt: "شعار الشركة",
+    selectLogo: "اختيار الشعار",
+    removeLogo: "إزالة",
+    logoHint: "PNG أو JPG أو WebP · بحد أقصى 2 ميجابايت",
+    companyName: "اسم الشركة",
+    companyNamePlaceholder: "مثال: شركة ProTeklif",
+    phone: "الهاتف",
+    phonePlaceholder: "+966 50 000 0000",
+    email: "البريد الإلكتروني",
+    emailPlaceholder: "hello@company.com",
+    taxOffice: "مكتب الضرائب",
+    taxOfficePlaceholder: "مكتب الضرائب",
+    taxNumber: "الرقم الضريبي",
+    taxNumberPlaceholder: "الرقم الضريبي",
+    address: "العنوان",
+    addressPlaceholder: "العنوان الكامل للشركة",
+    saving: "جارٍ الحفظ…",
+    saveCompany: "حفظ معلومات الشركة",
+    saved: "تم حفظ معلومات الشركة وستُستخدم في مستندات PDF الجديدة.",
+    loadError: "تعذر تحميل معلومات الشركة.",
+    logoError: "تعذر اختيار الشعار.",
+    saveError: "تعذر حفظ معلومات الشركة.",
+    backupTitle: "نسخة احتياطية لقاعدة البيانات",
+    backupDescription: "ينسخ بيانات العملاء والعروض والشركة إلى ملف SQLite واحد.",
+    createBackup: "إنشاء نسخة احتياطية",
+    backingUp: "جارٍ إنشاء النسخة…",
+    backupCanceled: "تم إلغاء النسخ الاحتياطي.",
+    backupSaved: "تم حفظ النسخة الاحتياطية:",
+    backupError: "تعذر إنشاء النسخة الاحتياطية.",
+  },
+  pt: {
+    title: "Configurações",
+    description: "Gira a identidade da empresa usada nos PDF e os seus dados locais.",
+    languageTitle: "Idioma da aplicação",
+    languageHelp: "Altere o idioma da interface. A escolha é aplicada imediatamente a toda a aplicação.",
+    companyInfo: "Informações da empresa",
+    loadingCompany: "A carregar informações da empresa…",
+    noLogo: "Sem logótipo",
+    logoAlt: "Logótipo da empresa",
+    selectLogo: "Escolher logótipo",
+    removeLogo: "Remover",
+    logoHint: "PNG, JPG ou WebP · máximo de 2 MB",
+    companyName: "Nome da empresa",
+    companyNamePlaceholder: "ex.: ProTeklif Lda.",
+    phone: "Telefone",
+    phonePlaceholder: "+351 900 000 000",
+    email: "E-mail",
+    emailPlaceholder: "ola@empresa.com",
+    taxOffice: "Repartição fiscal",
+    taxOfficePlaceholder: "Repartição fiscal",
+    taxNumber: "Número fiscal",
+    taxNumberPlaceholder: "Número fiscal",
+    address: "Morada",
+    addressPlaceholder: "Morada completa da empresa",
+    saving: "A guardar…",
+    saveCompany: "Guardar informações da empresa",
+    saved: "As informações da empresa foram guardadas e serão usadas nos novos PDF.",
+    loadError: "Não foi possível carregar as informações da empresa.",
+    logoError: "Não foi possível selecionar o logótipo.",
+    saveError: "Não foi possível guardar as informações da empresa.",
+    backupTitle: "Cópia de segurança da base de dados",
+    backupDescription: "Copia dados de clientes, propostas e empresa para um único ficheiro SQLite.",
+    createBackup: "Criar cópia de segurança",
+    backingUp: "A criar cópia…",
+    backupCanceled: "A cópia de segurança foi cancelada.",
+    backupSaved: "Cópia guardada:",
+    backupError: "Não foi possível criar a cópia de segurança.",
+  },
+  fr: {
+    title: "Paramètres",
+    description: "Gérez l’identité de l’entreprise utilisée dans les PDF et vos données locales.",
+    languageTitle: "Langue de l’application",
+    languageHelp: "Modifiez la langue de l’interface. Votre choix s’applique immédiatement à toute l’application.",
+    companyInfo: "Informations sur l’entreprise",
+    loadingCompany: "Chargement des informations de l’entreprise…",
+    noLogo: "Aucun logo",
+    logoAlt: "Logo de l’entreprise",
+    selectLogo: "Choisir un logo",
+    removeLogo: "Supprimer",
+    logoHint: "PNG, JPG ou WebP · 2 Mo maximum",
+    companyName: "Nom de l’entreprise",
+    companyNamePlaceholder: "ex. ProTeklif SARL",
+    phone: "Téléphone",
+    phonePlaceholder: "+33 6 00 00 00 00",
+    email: "E-mail",
+    emailPlaceholder: "bonjour@entreprise.fr",
+    taxOffice: "Centre des impôts",
+    taxOfficePlaceholder: "Centre des impôts",
+    taxNumber: "Numéro fiscal",
+    taxNumberPlaceholder: "Numéro fiscal",
+    address: "Adresse",
+    addressPlaceholder: "Adresse complète de l’entreprise",
+    saving: "Enregistrement…",
+    saveCompany: "Enregistrer les informations",
+    saved: "Les informations ont été enregistrées et seront utilisées dans les nouveaux PDF.",
+    loadError: "Impossible de charger les informations de l’entreprise.",
+    logoError: "Impossible de sélectionner le logo.",
+    saveError: "Impossible d’enregistrer les informations de l’entreprise.",
+    backupTitle: "Sauvegarde de la base de données",
+    backupDescription: "Copie les clients, devis et informations de l’entreprise dans un seul fichier SQLite.",
+    createBackup: "Créer une sauvegarde",
+    backingUp: "Sauvegarde en cours…",
+    backupCanceled: "La sauvegarde a été annulée.",
+    backupSaved: "Sauvegarde enregistrée :",
+    backupError: "Impossible de créer la sauvegarde.",
+  },
+  de: {
+    title: "Einstellungen",
+    description: "Verwalten Sie die Unternehmensdaten für PDF-Dokumente und Ihre lokalen Daten.",
+    languageTitle: "Anwendungssprache",
+    languageHelp: "Ändern Sie die Sprache der Oberfläche. Die Auswahl gilt sofort für die gesamte Anwendung.",
+    companyInfo: "Unternehmensinformationen",
+    loadingCompany: "Unternehmensinformationen werden geladen…",
+    noLogo: "Kein Logo",
+    logoAlt: "Unternehmenslogo",
+    selectLogo: "Logo auswählen",
+    removeLogo: "Entfernen",
+    logoHint: "PNG, JPG oder WebP · maximal 2 MB",
+    companyName: "Unternehmensname",
+    companyNamePlaceholder: "z. B. ProTeklif GmbH",
+    phone: "Telefon",
+    phonePlaceholder: "+49 30 000000",
+    email: "E-Mail",
+    emailPlaceholder: "hallo@unternehmen.de",
+    taxOffice: "Finanzamt",
+    taxOfficePlaceholder: "Finanzamt",
+    taxNumber: "Steuernummer",
+    taxNumberPlaceholder: "Steuernummer",
+    address: "Adresse",
+    addressPlaceholder: "Vollständige Unternehmensadresse",
+    saving: "Wird gespeichert…",
+    saveCompany: "Unternehmensinformationen speichern",
+    saved: "Die Unternehmensinformationen wurden gespeichert und werden in neuen PDFs verwendet.",
+    loadError: "Die Unternehmensinformationen konnten nicht geladen werden.",
+    logoError: "Das Logo konnte nicht ausgewählt werden.",
+    saveError: "Die Unternehmensinformationen konnten nicht gespeichert werden.",
+    backupTitle: "Datenbanksicherung",
+    backupDescription: "Kopiert Kunden-, Angebots- und Unternehmensdaten in eine einzelne SQLite-Datei.",
+    createBackup: "Sicherung erstellen",
+    backingUp: "Sicherung wird erstellt…",
+    backupCanceled: "Die Sicherung wurde abgebrochen.",
+    backupSaved: "Sicherung gespeichert:",
+    backupError: "Die Sicherung konnte nicht erstellt werden.",
+  },
+  ru: {
+    title: "Настройки",
+    description: "Управляйте реквизитами компании для PDF-документов и локальными данными.",
+    languageTitle: "Язык приложения",
+    languageHelp: "Измените язык интерфейса. Выбор сразу применяется ко всему приложению.",
+    companyInfo: "Информация о компании",
+    loadingCompany: "Загрузка информации о компании…",
+    noLogo: "Нет логотипа",
+    logoAlt: "Логотип компании",
+    selectLogo: "Выбрать логотип",
+    removeLogo: "Удалить",
+    logoHint: "PNG, JPG или WebP · не более 2 МБ",
+    companyName: "Название компании",
+    companyNamePlaceholder: "например, ООО «ProTeklif»",
+    phone: "Телефон",
+    phonePlaceholder: "+7 900 000-00-00",
+    email: "Эл. почта",
+    emailPlaceholder: "hello@company.ru",
+    taxOffice: "Налоговая инспекция",
+    taxOfficePlaceholder: "Налоговая инспекция",
+    taxNumber: "ИНН",
+    taxNumberPlaceholder: "Налоговый номер",
+    address: "Адрес",
+    addressPlaceholder: "Полный адрес компании",
+    saving: "Сохранение…",
+    saveCompany: "Сохранить информацию о компании",
+    saved: "Информация о компании сохранена и будет использоваться в новых PDF-документах.",
+    loadError: "Не удалось загрузить информацию о компании.",
+    logoError: "Не удалось выбрать логотип.",
+    saveError: "Не удалось сохранить информацию о компании.",
+    backupTitle: "Резервная копия базы данных",
+    backupDescription: "Копирует данные клиентов, предложений и компании в один файл SQLite.",
+    createBackup: "Создать резервную копию",
+    backingUp: "Создание копии…",
+    backupCanceled: "Резервное копирование отменено.",
+    backupSaved: "Резервная копия сохранена:",
+    backupError: "Не удалось создать резервную копию.",
+  },
+  ja: {
+    title: "設定",
+    description: "PDF 文書で使用する会社情報とローカルデータを管理します。",
+    languageTitle: "アプリの言語",
+    languageHelp: "画面表示の言語を変更します。選択内容はアプリ全体にすぐ反映されます。",
+    companyInfo: "会社情報",
+    loadingCompany: "会社情報を読み込み中…",
+    noLogo: "ロゴなし",
+    logoAlt: "会社ロゴ",
+    selectLogo: "ロゴを選択",
+    removeLogo: "削除",
+    logoHint: "PNG、JPG、WebP · 最大 2 MB",
+    companyName: "会社名",
+    companyNamePlaceholder: "例：ProTeklif 株式会社",
+    phone: "電話番号",
+    phonePlaceholder: "03-0000-0000",
+    email: "メールアドレス",
+    emailPlaceholder: "hello@company.jp",
+    taxOffice: "税務署",
+    taxOfficePlaceholder: "税務署",
+    taxNumber: "税務番号",
+    taxNumberPlaceholder: "税務番号",
+    address: "住所",
+    addressPlaceholder: "会社の住所",
+    saving: "保存中…",
+    saveCompany: "会社情報を保存",
+    saved: "会社情報を保存しました。新しい PDF 文書で使用されます。",
+    loadError: "会社情報を読み込めませんでした。",
+    logoError: "ロゴを選択できませんでした。",
+    saveError: "会社情報を保存できませんでした。",
+    backupTitle: "データベースのバックアップ",
+    backupDescription: "顧客、見積書、会社情報を 1 つの SQLite ファイルにコピーします。",
+    createBackup: "バックアップを作成",
+    backingUp: "バックアップ中…",
+    backupCanceled: "バックアップをキャンセルしました。",
+    backupSaved: "バックアップを保存しました：",
+    backupError: "バックアップを作成できませんでした。",
+  },
+};
+
+export default function Settings() {
+  const { language, setLanguage } = useI18n();
+  const copy = copies[language] || copies.en;
+  const [form, setForm] = useState(empty);
+  const [notice, setNotice] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    api.company
+      .get()
+      .then((data) => {
+        if (!active) return;
+        setForm({
+          name: data.name || "",
+          logoDataUrl: data.logo_data_url || "",
+          address: data.address || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          taxOffice: data.tax_office || "",
+          taxNumber: data.tax_number || "",
+        });
+      })
+      .catch(() => active && setNotice({ key: "loadError" }))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const change = (event) =>
+    setForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value,
+    }));
+
+  const selectLogo = async () => {
+    setNotice(null);
+    try {
+      const result = await api.company.selectLogo();
+      if (!result.canceled) {
+        setForm((current) => ({ ...current, logoDataUrl: result.dataUrl }));
+      }
+    } catch {
+      setNotice({ key: "logoError" });
+    }
+  };
+
+  const save = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setNotice(null);
+    try {
+      await api.company.save(form);
+      setNotice({ key: "saved" });
+    } catch {
+      setNotice({ key: "saveError" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const backup = async () => {
+    setBackingUp(true);
+    setNotice(null);
+    try {
+      const result = await api.backup();
+      setNotice(
+        result.canceled
+          ? { key: "backupCanceled" }
+          : { key: "backupSaved", detail: result.filePath },
+      );
+    } catch {
+      setNotice({ key: "backupError" });
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
+  const input =
+    "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400";
+  const noticeText = notice
+    ? `${copy[notice.key]}${notice.detail ? ` ${notice.detail}` : ""}`
+    : "";
+
+  return (
+    <>
+      <PageHeader title={copy.title} description={copy.description} />
+      {noticeText && (
+        <div className="mb-5 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          {noticeText}
+        </div>
+      )}
+
+      <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold">{copy.languageTitle}</h3>
+        <p className="my-3 text-slate-500">{copy.languageHelp}</p>
+        <select
+          value={language}
+          onChange={(event) => setLanguage(event.target.value)}
+          className="w-full max-w-sm rounded-lg border border-slate-300 bg-white px-4 py-3"
+          aria-label={copy.languageTitle}
+        >
+          {languages.map(([code]) => (
+            <option key={code} value={code}>{nativeLanguageNames[code]}</option>
+          ))}
+        </select>
+      </section>
+
+      <form
+        onSubmit={save}
+        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+        aria-busy={loading || busy}
+      >
+        <h3 className="text-lg font-semibold">{copy.companyInfo}</h3>
+        {loading && <p className="mt-3 text-sm text-slate-500">{copy.loadingCompany}</p>}
+
+        <div className="mt-5 flex flex-col items-start gap-6 sm:flex-row">
+          <div className="flex h-28 w-40 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50">
+            {form.logoDataUrl ? (
+              <img
+                src={form.logoDataUrl}
+                className="h-full w-full object-contain p-2"
+                alt={copy.logoAlt}
+              />
+            ) : (
+              <span className="text-sm text-slate-400">{copy.noLogo}</span>
+            )}
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={selectLogo}
+              disabled={loading}
+              className="rounded-lg border border-slate-300 px-4 py-2.5 font-semibold disabled:opacity-50"
+            >
+              {copy.selectLogo}
+            </button>
+            {form.logoDataUrl && (
+              <button
+                type="button"
+                onClick={() => setForm((current) => ({ ...current, logoDataUrl: "" }))}
+                className="mx-2 px-3 py-2 text-sm text-red-600"
+              >
+                {copy.removeLogo}
+              </button>
+            )}
+            <p className="mt-2 text-xs text-slate-500">{copy.logoHint}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="text-sm font-medium md:col-span-2">
+            {copy.companyName} *
+            <input
+              required
+              disabled={loading}
+              name="name"
+              maxLength="160"
+              value={form.name}
+              onChange={change}
+              placeholder={copy.companyNamePlaceholder}
+              className={input}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            {copy.phone}
+            <input
+              disabled={loading}
+              name="phone"
+              maxLength="30"
+              value={form.phone}
+              onChange={change}
+              placeholder={copy.phonePlaceholder}
+              className={input}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            {copy.email}
+            <input
+              disabled={loading}
+              type="email"
+              name="email"
+              maxLength="160"
+              value={form.email}
+              onChange={change}
+              placeholder={copy.emailPlaceholder}
+              className={input}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            {copy.taxOffice}
+            <input
+              disabled={loading}
+              name="taxOffice"
+              maxLength="100"
+              value={form.taxOffice}
+              onChange={change}
+              placeholder={copy.taxOfficePlaceholder}
+              className={input}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            {copy.taxNumber}
+            <input
+              disabled={loading}
+              name="taxNumber"
+              maxLength="20"
+              value={form.taxNumber}
+              onChange={change}
+              placeholder={copy.taxNumberPlaceholder}
+              className={input}
+            />
+          </label>
+          <label className="text-sm font-medium md:col-span-2">
+            {copy.address}
+            <textarea
+              disabled={loading}
+              name="address"
+              rows="3"
+              maxLength="500"
+              value={form.address}
+              onChange={change}
+              placeholder={copy.addressPlaceholder}
+              className={input}
+            />
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            type="submit"
+            disabled={loading || busy}
+            className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60"
+          >
+            {busy ? copy.saving : copy.saveCompany}
+          </button>
+        </div>
+      </form>
+
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold">{copy.backupTitle}</h3>
+        <p className="my-3 text-slate-500">{copy.backupDescription}</p>
+        <button
+          type="button"
+          onClick={backup}
+          disabled={backingUp}
+          className="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white disabled:opacity-60"
+        >
+          {backingUp ? copy.backingUp : copy.createBackup}
+        </button>
+      </section>
+    </>
+  );
+}
