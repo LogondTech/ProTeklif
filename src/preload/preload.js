@@ -11,7 +11,8 @@ contextBridge.exposeInMainWorld('proteklif', {
   offers: {
     list: () => ipcRenderer.invoke('offers:list'),
     create: (offer) => ipcRenderer.invoke('offers:create', offer),
-    exportPdf: (id, language) => ipcRenderer.invoke('offers:export-pdf', id, language)
+    previewHtml: (id, language, template) => ipcRenderer.invoke('offers:preview-html', id, language, template),
+    exportPdf: (id, language, template) => ipcRenderer.invoke('offers:export-pdf', id, language, template)
   },
   company: {
     get: () => ipcRenderer.invoke('company:get'),

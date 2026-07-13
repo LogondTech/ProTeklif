@@ -1,7 +1,8 @@
 {
   "name": "proteklif",
-  "version": "0.1.0",
-  "description": "Küçük işletmeler için local-first teklif yönetimi",
+  "version": "1.0.0",
+  "author": "Octen Teknoloji",
+  "description": "Küçük işletmeler için profesyonel teklif ve fiyatlandırma yönetimi",
   "main": "src/main/main.js",
   "type": "module",
   "scripts": {
@@ -9,7 +10,8 @@
     "build": "vite build",
     "start": "electron .",
     "dist": "npm run build && electron-builder",
-    "rebuild": "electron-rebuild -f -w better-sqlite3"
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
@@ -25,16 +27,59 @@
     "concurrently": "^9.2.0",
     "cross-env": "^10.0.0",
     "electron": "39.8.10",
-    "electron-builder": "^26.0.12",
+    "electron-builder": "^26.15.3",
     "vite": "^8.1.0",
     "wait-on": "^9.0.0"
   },
   "build": {
     "appId": "com.proteklif.app",
     "productName": "ProTeklif",
-    "asarUnpack": ["**/node_modules/better-sqlite3/**/*"],
-    "files": ["dist/**/*", "src/main/**/*", "src/preload/**/*", "database/**/*", "package.json"],
-    "directories": { "output": "release" },
-    "win": { "target": "nsis" }
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**/*"
+    ],
+    "files": [
+      "dist/**/*",
+      "src/main/**/*",
+      "src/preload/**/*",
+      "database/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "appx"
+      ]
+    },
+    "appx": {
+      "applicationId": "ProTeklif",
+      "identityName": "OctenTeknoloji.ProTeklif",
+      "publisher": "CN=57D5B04B-4FFB-4CA8-8061-47380F803216",
+      "publisherDisplayName": "Octen Teknoloji",
+      "displayName": "ProTeklif",
+      "backgroundColor": "#031333",
+      "languages": [
+        "tr-TR",
+        "en-US",
+        "zh-CN",
+        "hi-IN",
+        "es-ES",
+        "ar-SA",
+        "pt-BR",
+        "fr-FR",
+        "de-DE",
+        "ru-RU",
+        "ja-JP"
+      ],
+      "minVersion": "10.0.17763.0",
+      "maxVersionTested": "10.0.26100.0",
+      "showNameOnTiles": false,
+      "customManifestPath": "resources/appxmanifest.xml",
+      "artifactName": "ProTeklif-${version}-${arch}.${ext}"
+    }
   }
 }

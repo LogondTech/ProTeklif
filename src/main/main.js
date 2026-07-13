@@ -104,15 +104,24 @@ function registerIpcHandlers() {
     fs.copyFileSync(databasePath, filePath);
     return { canceled: false, filePath };
   });
-  ipcMain.handle('offers:export-pdf', async (_event, id, language = 'tr') => {
-    const offer = offers.get(Number(id));
+  ipcMain.handle('offers:preview-html', (_event, id, language = 'tr', template = 'modern') => {
+    const offerId = Number(id);
+    if (!Number.isInteger(offerId) || offerId < 1) throw new Error('Geçersiz teklif.');
+    const offer = offers.get(offerId);
+    if (!offer) throw new Error('Teklif bulunamadı.');
+    return createOfferHtml(offer, companySettings.get(), language, template);
+  });
+  ipcMain.handle('offers:export-pdf', async (_event, id, language = 'tr', template = 'modern') => {
+    const offerId = Number(id);
+    if (!Number.isInteger(offerId) || offerId < 1) throw new Error('Geçersiz teklif.');
+    const offer = offers.get(offerId);
     if (!offer) throw new Error('Teklif bulunamadı.');
     const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, { title: 'Teklifi PDF Kaydet', defaultPath: `${offer.offer_number}.pdf`, filters: [{ name: 'PDF', extensions: ['pdf'] }] });
     if (canceled || !filePath) return { canceled: true };
     const pdfWindow = new BrowserWindow({ show: false, webPreferences: { sandbox: true } });
     try {
-      await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(createOfferHtml(offer, companySettings.get(), language))}`);
-      const pdf = await pdfWindow.webContents.printToPDF({ pageSize: 'A4', printBackground: true, margins: { top: 0.4, bottom: 0.4, left: 0.4, right: 0.4 } });
+      await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(createOfferHtml(offer, companySettings.get(), language, template))}`);
+      const pdf = await pdfWindow.webContents.printToPDF({ pageSize: 'A4', printBackground: true, preferCSSPageSize: true });
       fs.writeFileSync(filePath, pdf);
       return { canceled: false, filePath };
     } finally { pdfWindow.destroy(); }

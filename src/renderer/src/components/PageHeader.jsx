@@ -1,1 +1,1 @@
-export default function PageHeader({ title, description }) { return <header className="mb-8"><h2 className="text-3xl font-bold">{title}</h2><p className="mt-2 text-slate-500">{description}</p></header>; }
+export default function PageHeader({ title, description, actions }) { return <header className="page-header"><div><h2>{title}</h2><p>{description}</p></div>{actions && <div className="page-actions">{actions}</div>}</header>; }

@@ -1,19 +1,6 @@
 import { useEffect } from 'react';
+import { getModalCloseLabel } from '../data/modal.js';
 import { useI18n } from '../i18n.jsx';
-
-const closeLabels = {
-  tr: 'Kapat',
-  en: 'Close',
-  zh: '关闭',
-  hi: 'बंद करें',
-  es: 'Cerrar',
-  ar: 'إغلاق',
-  pt: 'Fechar',
-  fr: 'Fermer',
-  de: 'Schließen',
-  ru: 'Закрыть',
-  ja: '閉じる'
-};
 
 export default function Modal({ title, children, onClose }) {
   const { language } = useI18n();
@@ -39,7 +26,7 @@ export default function Modal({ title, children, onClose }) {
             type="button"
             onClick={onClose}
             className="rounded-lg px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100"
-            aria-label={closeLabels[language] || closeLabels.en}
+            aria-label={getModalCloseLabel(language)}
           >
             ×
           </button>
